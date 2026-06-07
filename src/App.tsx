@@ -19,6 +19,18 @@ function App() {
   const code = useAppStore(state => state.code);
   const compile = useAppStore(state => state.compile);
   const setHandMode = useAppStore(state => state.setHandMode);
+  const theme = useAppStore(state => state.theme);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+  }, [theme]);
 
   useEffect(() => {
     // Auto-compile on first load to render shared schema
@@ -51,17 +63,17 @@ function App() {
   }, [setHandMode]);
 
   return (
-    <div className="flex h-[100dvh] w-screen overflow-hidden bg-white text-slate-900 font-sans dark:bg-slate-950">
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-background text-foreground font-sans transition-colors duration-300">
       <Suspense fallback={<Loader />}>
         {/* Desktop Sidebar */}
-        <div className="hidden md:flex h-full">
+        <div className="hidden md:flex h-full border-r border-slate-200/50 dark:border-white/5">
           <Sidebar />
         </div>
 
         <div className="flex flex-col flex-1 min-w-0 relative h-full">
           <Topbar />
           
-          <div className="flex-1 relative bg-slate-50 dark:bg-slate-950 overflow-hidden">
+          <div className="flex-1 relative bg-[#FAFAFA] dark:bg-[#121212] overflow-hidden">
             <DiagramCanvas />
             <ExportPreviewModal />
             

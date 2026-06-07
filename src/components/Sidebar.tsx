@@ -1,6 +1,8 @@
 import { useAppStore } from '../store/useAppStore';
 import Editor from '@monaco-editor/react';
 import { TEMPLATES } from '../lib/templates';
+import { formatDSL } from '../lib/formatter';
+import { Wand2 } from 'lucide-react';
 
 export const Sidebar = () => {
   const code = useAppStore(state => state.code);
@@ -96,6 +98,14 @@ export const Sidebar = () => {
     <div className="w-[340px] h-full border-r border-slate-800 bg-[#1e1e1e] flex flex-col shrink-0 z-40 shadow-xl">
       <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 shrink-0 bg-black/20">
         <span className="text-slate-400 text-xs font-semibold tracking-wider">LIVE EDITOR</span>
+        <button 
+          onClick={() => setCode(formatDSL(code))}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
+          title="Format Code"
+        >
+          <Wand2 className="w-3.5 h-3.5" />
+          Format
+        </button>
       </div>
       
       <div className="px-4 py-3 flex-1 flex flex-col min-h-0 gap-3">

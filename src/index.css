@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-border: hsl(var(--border));
@@ -35,26 +36,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 265 25% 98%; /* Material You Surface */
+    --foreground: 265 50% 15%; /* Material You On-Surface */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 265 50% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 265 50% 15%;
+    --primary: 265 80% 65%; /* Material You Primary */
+    --primary-foreground: 0 0% 100%; /* Material You On-Primary */
+    --secondary: 265 30% 90%; /* Material You Secondary Container */
+    --secondary-foreground: 265 60% 30%; /* Material You On-Secondary Container */
+    --muted: 265 20% 94%;
+    --muted-foreground: 265 15% 45%;
+    --accent: 265 40% 90%;
+    --accent-foreground: 265 50% 25%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 1rem;
+    --destructive-foreground: 0 0% 98%;
+    --border: 265 20% 88%;
+    --input: 265 20% 88%;
+    --ring: 265 80% 65%;
+    --radius: 2rem; /* Material You Pill Shapes */
   }
   .theme-rose {
     --primary: 346.8 77.2% 49.8%;
@@ -72,25 +73,25 @@
     --ring: 24.6 95% 53.1%;
   }
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 265 20% 10%; /* Material You Surface Dark */
+    --foreground: 265 20% 90%; /* Material You On-Surface Dark */
+    --card: 265 20% 12%;
+    --card-foreground: 265 20% 90%;
+    --popover: 265 20% 12%;
+    --popover-foreground: 265 20% 90%;
+    --primary: 265 70% 75%; /* Material You Primary Dark */
+    --primary-foreground: 265 50% 15%; /* Material You On-Primary Dark */
+    --secondary: 265 20% 20%; /* Material You Secondary Container Dark */
+    --secondary-foreground: 265 30% 85%; /* Material You On-Secondary Container Dark */
+    --muted: 265 15% 18%;
+    --muted-foreground: 265 15% 65%;
+    --accent: 265 25% 20%;
+    --accent-foreground: 265 30% 85%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 265 15% 20%;
+    --input: 265 15% 20%;
+    --ring: 265 70% 75%;
   }
 }
 
