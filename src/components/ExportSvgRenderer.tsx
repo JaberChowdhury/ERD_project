@@ -128,7 +128,9 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
             if (table.meta.color.startsWith('#')) hexColor = table.meta.color;
             else {
               const mapped = colorMap[table.meta.color as keyof typeof colorMap];
-              if (mapped) hexColor = mapped.borderHex || mapped.hex || hexColor;
+              if (mapped) {
+                hexColor = mapped.hex || hexColor;
+              }
             }
           }
 

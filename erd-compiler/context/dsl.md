@@ -14,7 +14,7 @@ tableName [icon: icon-name, color: #hex] {
 ```
 
 - **`icon`**: Must match a valid `lucide-react` icon name (e.g., `shopping-cart`, `user`, `database`).
-- **`color`**: A standard hex color code (e.g., `#ef4444`, `#3b82f6`). This color is applied to the table's border, icon, and badges.
+- **`color`**: A standard hex color code (e.g., `#ef4444`, `#3b82f6`), or a named color from our map (e.g., `blue`, `cyan`, `orange`, `green`, `red`, `yellow`, `purple`, `pink`, `gray`). This color is applied to the table's border, icon, and background headers.
 - **`pk`**: A keyword denoting a Primary Key.
 
 ### Relationships

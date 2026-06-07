@@ -2,20 +2,25 @@
 
 The export system is located in `src/lib/export.ts` and handles rendering the ERD graph into PNG, SVG, or animated GIF formats.
 
-## The Problem with Browser Exports
-Exporting a live React DOM via `html-to-image` is notoriously difficult when the element has been scaled, translated, or pushed outside the viewport bounds by a user zooming in or scrolling.
+## Pure Native SVG Engine
+The original export engine relied on `html-to-image` capturing a hidden DOM element, which was highly prone to browser memory limits, hardware acceleration bugs, and arbitrary sizing glitches. 
 
-## DOM Isolation Pattern
-To guarantee a 100% pixel-perfect capture without clipping, the export engine utilizes a **DOM Isolation Sequence**:
+The application now uses a **100% Native SVG Pipeline** completely bypassing browser layout rendering:
+1. **Mathematical Layout**: The graph's bounding box is computed from the Zustand layout store.
+2. **Virtual Rendering**: Instead of reading the DOM, `react-dom/server` (via `renderToString`) is used to render `<ExportSvgRenderer>`—a pure, standalone React component made exclusively of mathematically positioned `<svg>`, `<rect>`, and `<path>` tags representing tables, borders, and curved connections.
+3. **Data URI Translation**: The resulting raw SVG markup string is encoded into an `image/svg+xml` Blob.
 
-1. **Calculate Bounds**: The engine iterates through the Zustand `nodesLayout` to find the extreme X and Y coordinates (minX, minY, maxX, maxY), establishing the absolute bounding box of the graph.
-2. **Clone Node**: The target DOM node (`#zoom-layer`) is cloned (`cloneNode(true)`).
-3. **Hidden Wrapper**: A new `div` is appended to `document.body` positioned off-screen (e.g., `left: -9999px`). The unscaled width and height of the bounding box are strictly applied to this wrapper.
-4. **Translate**: The clone is injected into the wrapper with a transform matrix of `translate(-minX, -minY)` to force the top-left of the bounding box strictly into the `(0,0)` origin of the wrapper.
-5. **Capture**: `html-to-image` is then pointed strictly at this isolated, unscaled clone, guaranteeing that no browser optimization or viewport constraint interferes with the render.
+## PNG Export
+To generate a rasterized PNG:
+1. The standalone SVG Blob is loaded into an isolated, off-screen HTML5 `Canvas`.
+2. Due to browser memory limits, large ERDs exceeding hardware acceleration maximums (e.g. `16384px`) are mathematically downscaled to fit within safe limits before rasterization.
+3. The canvas is drawn and exported using `.toDataURL('image/png')`.
 
 ## GIF Animation
-For animated GIFs, the export engine:
-1. Calculates multiple frame offsets for the dashed SVG relationship lines.
-2. Iterates and captures a PNG frame for each offset using `html-to-image`.
-3. Passes the array of base64 PNGs to `gifshot`, which compiles them into a smooth 60fps looping animation.
+For animated GIFs, the engine:
+1. Translates the SVG string to slightly offset the dashed lines for each frame.
+2. Rasterizes each frame onto a canvas and extracts a JPEG data string (`image/jpeg` with quality compression is used to prevent OOM errors for complex ERDs).
+3. Passes the compressed frame array to `gifshot`, compiling them into a looping animation.
+
+## Automated UI Testing
+The export engine relies heavily on Playwright E2E tests (`tests/export.spec.ts`) to simulate the `ExportPreviewModal` and ensure regression-free PNG rendering flows.

@@ -23,9 +23,9 @@ export const ExportPreviewModal: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="p-6 overflow-auto max-h-[75vh] flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-b-3xl">
+        <div className="p-6 h-[75vh] w-full flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-b-3xl">
           {/* We use an img tag for all types, as browsers can render data URIs natively */}
-          <img src={previewDataUrl} alt="Preview" className="max-w-full object-contain rounded-xl shadow-lg border border-slate-200 dark:border-slate-800" />
+          <img src={previewDataUrl} alt="Preview" className="w-full h-full object-contain drop-shadow-xl" />
         </div>
       </DialogContent>
     </Dialog>
