@@ -1,0 +1,85 @@
+import { useEffect, Suspense, lazy } from 'react';
+import { useAppStore } from './store/useAppStore';
+import { Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from './components/ui/sheet';
+import { Topbar } from './components/Topbar';
+
+const Sidebar = lazy(() => import('./components/Sidebar').then(m => ({ default: m.Sidebar })));
+const DiagramCanvas = lazy(() => import('./components/DiagramCanvas').then(m => ({ default: m.DiagramCanvas })));
+const ExportOverlay = lazy(() => import('./components/ExportOverlay').then(m => ({ default: m.ExportOverlay })));
+
+const Loader = () => (
+  <div className="flex-1 flex h-full w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
+  </div>
+);
+
+function App() {
+  const code = useAppStore(state => state.code);
+  const compile = useAppStore(state => state.compile);
+  const setHandMode = useAppStore(state => state.setHandMode);
+
+  useEffect(() => {
+    // Auto-compile on first load to render shared schema
+    setTimeout(() => {
+      useAppStore.getState().compile();
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    compile();
+  }, [code, compile]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'INPUT') {
+        setHandMode(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'h') {
+        setHandMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [setHandMode]);
+
+  return (
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-white text-slate-900 font-sans dark:bg-slate-950">
+      <Suspense fallback={<Loader />}>
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex h-full">
+          <Sidebar />
+        </div>
+
+        <div className="flex flex-col flex-1 min-w-0 relative h-full">
+          <Topbar />
+          
+          <div className="flex-1 relative overflow-hidden bg-slate-50 dark:bg-slate-950 h-full">
+            <DiagramCanvas />
+            
+            {/* Mobile Sidebar Trigger (FAB) */}
+            <Sheet>
+              <SheetTrigger className="md:hidden absolute bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground z-50 flex items-center justify-center">
+                <Menu className="h-6 w-6" />
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-[340px] max-w-[90vw] border-r-0 bg-[#1e1e1e]">
+                <SheetTitle className="sr-only">Editor Sidebar</SheetTitle>
+                <SheetDescription className="sr-only">Live DSL Editor</SheetDescription>
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+        <ExportOverlay />
+      </Suspense>
+    </div>
+  );
+}
+
+export default App;
