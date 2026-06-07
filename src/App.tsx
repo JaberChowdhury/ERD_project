@@ -1,10 +1,11 @@
 import { useEffect, Suspense, lazy } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { ExportPreviewModal } from './components/ExportPreviewModal';
 import { useAppStore } from './store/useAppStore';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from './components/ui/sheet';
 import { Topbar } from './components/Topbar';
 
-const Sidebar = lazy(() => import('./components/Sidebar').then(m => ({ default: m.Sidebar })));
 const DiagramCanvas = lazy(() => import('./components/DiagramCanvas').then(m => ({ default: m.DiagramCanvas })));
 const ExportOverlay = lazy(() => import('./components/ExportOverlay').then(m => ({ default: m.ExportOverlay })));
 
@@ -60,8 +61,9 @@ function App() {
         <div className="flex flex-col flex-1 min-w-0 relative h-full">
           <Topbar />
           
-          <div className="flex-1 relative overflow-hidden bg-slate-50 dark:bg-slate-950 h-full">
+          <div className="flex-1 relative bg-slate-50 dark:bg-slate-950 overflow-hidden">
             <DiagramCanvas />
+            <ExportPreviewModal />
             
             {/* Mobile Sidebar Trigger (FAB) */}
             <Sheet>

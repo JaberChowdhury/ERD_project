@@ -5,7 +5,7 @@ import { Loader2, TerminalSquare, CheckCircle2 } from 'lucide-react';
 
 export const ExportOverlay = () => {
   const isExporting = useAppStore(s => s.isExporting);
-  const exportTitle = useAppStore(s => s.exportTitle);
+  const exportStatus = useAppStore(s => s.exportStatus);
   const exportProgress = useAppStore(s => s.exportProgress);
   const exportLogs = useAppStore(s => s.exportLogs);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -42,7 +42,7 @@ export const ExportOverlay = () => {
                 </div>
               )}
               
-              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1 tracking-tight">{exportTitle}</h3>
+              <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">{exportStatus}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center font-medium">Please wait while the rendering engine processes your diagram.</p>
               
               <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden relative">

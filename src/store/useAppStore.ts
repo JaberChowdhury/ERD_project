@@ -25,9 +25,11 @@ interface AppState {
   translateY: number;
 
   isExporting: boolean;
-  exportTitle: string;
+  exportStatus: string;
   exportProgress: number;
   exportLogs: string[];
+  previewDataUrl: string | null;
+  previewType: 'svg' | 'png' | 'gif' | null;
   showGrid: boolean;
   isHandMode: boolean;
 
@@ -37,8 +39,9 @@ interface AppState {
   updateNodePosition: (id: string, x: number, y: number) => void;
   setViewport: (scale: number, translateX: number, translateY: number) => void;
   resetView: (containerWidth: number, containerHeight: number) => void;
-  setExportState: (isExporting: boolean, title?: string, progress?: number) => void;
+  setExportState: (isExporting: boolean, status?: string, progress?: number) => void;
   addExportLog: (log: string) => void;
+  setPreview: (url: string | null, type?: 'svg' | 'png' | 'gif' | null) => void;
   clearExportLogs: () => void;
   setShowGrid: (show: boolean) => void;
   setHandMode: (mode: boolean) => void;
@@ -122,12 +125,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   translateX: 0,
   translateY: 0,
   isExporting: false,
-  exportTitle: 'Exporting...',
+  exportStatus: '',
   exportProgress: 0,
   exportLogs: [],
+  previewDataUrl: null,
+  previewType: null,
   showGrid: true,
   isHandMode: false,
 
+  setPreview: (url, type) => set({ previewDataUrl: url, previewType: type || null }),
   setHandMode: (mode) => set({ isHandMode: mode }),
   setCode: (code) => set({ code }),
   setHoveredTable: (table) => set({ hoveredTable: table }),
@@ -140,9 +146,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
   setViewport: (scale, translateX, translateY) => set({ scale, translateX, translateY }),
   
-  setExportState: (isExporting, title, progress) => set((state) => ({
+  setExportState: (isExporting, status, progress) => set((state) => ({
     isExporting,
-    exportTitle: title ?? state.exportTitle,
+    exportStatus: status ?? state.exportStatus,
     exportProgress: progress ?? state.exportProgress
   })),
 
