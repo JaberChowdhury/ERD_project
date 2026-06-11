@@ -38,7 +38,7 @@ const TableNode = ({ table, layout }: { table: any; layout: any }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const isHovered = hoveredTable === name;
-  const isCustomColor = meta.color.startsWith("#");
+  const isCustomColor = Boolean(meta?.color?.startsWith("#"));
   const customColor = isCustomColor ? meta.color : undefined;
 
   let isDimmed = false;
@@ -337,7 +337,7 @@ export const DiagramCanvas = () => {
               id="arrow-start"
               markerWidth="14"
               markerHeight="14"
-              refX="0"
+              refX="14"
               refY="7"
               orient="auto-start-reverse"
               markerUnits="userSpaceOnUse"
@@ -359,7 +359,7 @@ export const DiagramCanvas = () => {
               id="arrow-start-highlight"
               markerWidth="14"
               markerHeight="14"
-              refX="0"
+              refX="14"
               refY="7"
               orient="auto-start-reverse"
               markerUnits="userSpaceOnUse"
@@ -389,9 +389,15 @@ export const DiagramCanvas = () => {
               );
               if (srcFieldIndex === -1 || tgtFieldIndex === -1) return null;
 
-              // Calculate EXACT field Y offsets (45px header + index * 33px + half row 16.5px)
-              const srcY = srcNode.y + 45 + srcFieldIndex * 33 + 16.5;
-              const tgtY = tgtNode.y + 45 + tgtFieldIndex * 33 + 16.5;
+              const headerHeightObj = Math.max(
+                settings.headerHeight,
+                Math.max(settings.iconSize, settings.fontSize + 4) + 8,
+              );
+              const rowHeightObj = settings.fontSize + settings.rowPadding + 2;
+
+              // Calculate EXACT field Y offsets (2px border + headerHeight + 4px padding + index * rowHeight + half row)
+              const srcY = srcNode.y + 6 + headerHeightObj + srcFieldIndex * rowHeightObj + rowHeightObj / 2;
+              const tgtY = tgtNode.y + 6 + headerHeightObj + tgtFieldIndex * rowHeightObj + rowHeightObj / 2;
 
               let startX,
                 startY = srcY;
@@ -407,13 +413,18 @@ export const DiagramCanvas = () => {
                 endX = tgtNode.x + tgtNode.width;
               }
 
-              const distance = Math.max(Math.abs(endX - startX) * 0.5, 50);
+              // Fan out edges spanning large vertical distances to prevent dense bundling and overlap
+              const verticalDist = Math.abs(endY - startY);
+              const horizontalDist = Math.abs(endX - startX);
+              const distance = Math.max(horizontalDist * 0.5, 50) + verticalDist * 0.25;
 
               let pathD = "";
               if (settings.pathType === "straight") {
                 pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
               } else if (settings.pathType === "step") {
-                const midX = startX + (endX - startX) / 2;
+                // Offset vertical segments for step paths to prevent them from overlapping each other
+                const offsetDir = startY > endY ? 1 : -1;
+                const midX = startX + (endX - startX) / 2 + (verticalDist * 0.15 * offsetDir);
                 pathD = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
               } else {
                 const cp1x = startX + (isLeftToRight ? distance : -distance);

@@ -14,7 +14,7 @@ import {
 import { Button } from "./ui/button";
 import { ExportDialog } from "./ExportDialog";
 import { SettingsDialog } from "./SettingsDialog";
-import LZString from "lz-string";
+import { ShareDialog } from "./ShareDialog";
 
 export const Topbar: React.FC = () => {
   const compile = useAppStore((state) => state.compile);
@@ -75,22 +75,15 @@ export const Topbar: React.FC = () => {
         <ExportDialog>
           <Download className="w-3.5 h-3.5" /> Export Diagram...
         </ExportDialog>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 h-8 text-xs font-medium rounded-full"
-          onClick={() => {
-            const code = useAppStore.getState().code;
-            const settings = useAppStore.getState().canvasSettings;
-            const payload = JSON.stringify({ code, settings });
-            const compressed = LZString.compressToEncodedURIComponent(payload);
-            window.location.hash = `data=${compressed}`;
-            navigator.clipboard.writeText(window.location.href);
-            alert("Shareable link copied to clipboard!");
-          }}
-        >
-          <Share2 className="w-3.5 h-3.5" /> Share
-        </Button>
+        <ShareDialog>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 text-xs font-medium rounded-full"
+          >
+            <Share2 className="w-3.5 h-3.5" /> Share
+          </Button>
+        </ShareDialog>
         <div className="w-px h-6 bg-border mx-2"></div>
         <Button
           variant="outline"

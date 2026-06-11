@@ -22,7 +22,7 @@ export const SettingsDialog = ({
   return (
     <Dialog>
       <DialogTrigger render={children} />
-      <DialogContent className="min-w-[320px] w-full max-w-[90vw] sm:max-w-[720px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl">
+      <DialogContent className="min-w-[320px] w-full max-w-[90vw] sm:max-w-[720px] bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="w-5 h-5" /> Canvas Settings
@@ -180,6 +180,24 @@ export const SettingsDialog = ({
                   <option value="1rem">16px (Medium)</option>
                   <option value="1.5rem">24px (Large)</option>
                   <option value="2rem">32px (Pill)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">
+                  Font Family
+                </label>
+                <select
+                  value={settings.fontFamily}
+                  onChange={(e) =>
+                    updateSettings({ fontFamily: e.target.value })
+                  }
+                  className="w-full bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1.5 text-sm border-0 focus:ring-2 focus:ring-primary"
+                >
+                  <option value="ui-sans-serif, system-ui, sans-serif">System Sans</option>
+                  <option value="'Geist', sans-serif">Geist</option>
+                  <option value="ui-serif, Georgia, serif">System Serif</option>
+                  <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace">Monospace</option>
+                  <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
                 </select>
               </div>
               <div>

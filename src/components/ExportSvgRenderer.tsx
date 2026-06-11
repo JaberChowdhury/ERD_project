@@ -77,7 +77,7 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
           id="arrow-start"
           markerWidth="14"
           markerHeight="14"
-          refX="0"
+          refX="14"
           refY="7"
           orient="auto-start-reverse"
           markerUnits="userSpaceOnUse"
@@ -106,22 +106,14 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
           );
           if (srcFieldIndex === -1 || tgtFieldIndex === -1) return null;
 
-          const headerPadding = 28;
-          const rowPadding = 12;
-          const headerHeight =
-            Math.max(settings.iconSize, settings.fontSize + 4) + headerPadding;
-          const rowHeight = settings.fontSize + rowPadding + 2;
+          const headerHeightObj = Math.max(
+            settings.headerHeight,
+            Math.max(settings.iconSize, settings.fontSize + 4) + 8,
+          );
+          const rowHeightObj = settings.fontSize + settings.rowPadding + 2;
 
-          const srcY =
-            srcNode.y +
-            headerHeight +
-            srcFieldIndex * rowHeight +
-            rowHeight / 2;
-          const tgtY =
-            tgtNode.y +
-            headerHeight +
-            tgtFieldIndex * rowHeight +
-            rowHeight / 2;
+          const srcY = srcNode.y + headerHeightObj + srcFieldIndex * rowHeightObj + rowHeightObj / 2;
+          const tgtY = tgtNode.y + headerHeightObj + tgtFieldIndex * rowHeightObj + rowHeightObj / 2;
 
           let startX,
             startY = srcY;
@@ -137,13 +129,16 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
             endX = tgtNode.x + tgtNode.width;
           }
 
-          const distance = Math.max(Math.abs(endX - startX) * 0.5, 50);
+          const verticalDist = Math.abs(endY - startY);
+          const horizontalDist = Math.abs(endX - startX);
+          const distance = Math.max(horizontalDist * 0.5, 50) + verticalDist * 0.25;
 
           let pathD = "";
           if (settings.pathType === "straight") {
             pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
           } else if (settings.pathType === "step") {
-            const midX = startX + (endX - startX) / 2;
+            const offsetDir = startY > endY ? 1 : -1;
+            const midX = startX + (endX - startX) / 2 + (verticalDist * 0.15 * offsetDir);
             pathD = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
           } else {
             const cp1x = startX + (isLeftToRight ? distance : -distance);

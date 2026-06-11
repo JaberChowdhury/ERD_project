@@ -510,3 +510,84 @@ suppliers.id < inventory.supplierId
 suppliers.id < invoices.supplierId`
   }
 ];
+
+export const SQL_TEMPLATES = [
+  {
+    title: 'E-Commerce SQL',
+    code: `CREATE TABLE users (
+  id INT PRIMARY KEY,
+  email VARCHAR(255),
+  password_hash VARCHAR(255),
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+  created_at TIMESTAMP
+);
+
+CREATE TABLE products (
+  id INT PRIMARY KEY,
+  category_id INT,
+  name VARCHAR(255),
+  price DECIMAL(10, 2),
+  stock INT
+);
+
+CREATE TABLE categories (
+  id INT PRIMARY KEY,
+  parent_id INT,
+  name VARCHAR(100)
+);
+
+CREATE TABLE orders (
+  id INT PRIMARY KEY,
+  user_id INT,
+  status VARCHAR(50),
+  total_amount DECIMAL(10, 2),
+  created_at TIMESTAMP
+);
+
+CREATE TABLE order_items (
+  id INT PRIMARY KEY,
+  order_id INT,
+  product_id INT,
+  quantity INT,
+  unit_price DECIMAL(10, 2)
+);
+
+ALTER TABLE products ADD CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES categories(id);
+ALTER TABLE orders ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE order_items ADD CONSTRAINT fk_item_order FOREIGN KEY (order_id) REFERENCES orders(id);
+ALTER TABLE order_items ADD CONSTRAINT fk_item_product FOREIGN KEY (product_id) REFERENCES products(id);
+`
+  },
+  {
+    title: 'Blog / Social Media SQL',
+    code: `CREATE TABLE users (
+  id INT PRIMARY KEY,
+  username VARCHAR(50),
+  email VARCHAR(100),
+  bio TEXT,
+  created_at TIMESTAMP
+);
+
+CREATE TABLE posts (
+  id INT PRIMARY KEY,
+  author_id INT,
+  title VARCHAR(255),
+  content TEXT,
+  created_at TIMESTAMP
+);
+
+CREATE TABLE comments (
+  id INT PRIMARY KEY,
+  post_id INT,
+  author_id INT,
+  content TEXT,
+  created_at TIMESTAMP
+);
+
+ALTER TABLE posts ADD CONSTRAINT fk_post_author FOREIGN KEY (author_id) REFERENCES users(id);
+ALTER TABLE comments ADD CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES posts(id);
+ALTER TABLE comments ADD CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES users(id);
+`
+  }
+];

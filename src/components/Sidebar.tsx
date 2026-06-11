@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import Editor from '@monaco-editor/react';
-import { TEMPLATES } from '../lib/templates';
+import { TEMPLATES, SQL_TEMPLATES } from '../lib/templates';
 import { formatDSL } from '../lib/formatter';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Database, Code2, Play } from 'lucide-react';
+import { convertSqlToDsl } from '../lib/sqlToDsl';
 
 export const Sidebar = () => {
   const code = useAppStore(state => state.code);
   const setCode = useAppStore(state => state.setCode);
+  
+  const [activeTab, setActiveTab] = useState<'dsl' | 'sql'>('dsl');
+  const [sqlCode, setSqlCode] = useState<string>('-- Enter your CREATE TABLE statements here...\n');
 
   const handleEditorWillMount = (monaco: any) => {
     monaco.languages.register({ id: 'erd-dsl' });
@@ -94,56 +99,130 @@ export const Sidebar = () => {
     });
   };
 
+  const handleGenerateFromSql = () => {
+    try {
+      const dsl = convertSqlToDsl(sqlCode);
+      setCode(dsl);
+      setActiveTab('dsl');
+    } catch (err: any) {
+      alert(err.message || "Failed to parse SQL");
+    }
+  };
+
   return (
     <div className="w-[340px] h-full border-r border-slate-800 bg-[#1e1e1e] flex flex-col shrink-0 z-40 shadow-xl">
       <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 shrink-0 bg-black/20">
-        <span className="text-slate-400 text-xs font-semibold tracking-wider">LIVE EDITOR</span>
-        <button 
-          onClick={() => setCode(formatDSL(code))}
-          className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1 rounded-md transition-colors"
-          title="Format Code"
-        >
-          <Wand2 className="w-3.5 h-3.5" />
-          Format
-        </button>
+        <div className="flex bg-slate-800/50 rounded-lg p-0.5">
+          <button
+            onClick={() => setActiveTab('dsl')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'dsl' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            <Code2 className="w-3.5 h-3.5" />
+            DSL
+          </button>
+          <button
+            onClick={() => setActiveTab('sql')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${activeTab === 'sql' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            SQL
+          </button>
+        </div>
+        
+        {activeTab === 'dsl' ? (
+          <button 
+            onClick={() => setCode(formatDSL(code))}
+            className="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-white/5 hover:bg-white/10 px-2 py-1.5 rounded-md transition-colors"
+            title="Format Code"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Format
+          </button>
+        ) : (
+          <button 
+            onClick={handleGenerateFromSql}
+            className="text-xs text-white flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 px-2 py-1.5 rounded-md transition-colors shadow-sm"
+            title="Generate Diagram from SQL"
+          >
+            <Play className="w-3.5 h-3.5" />
+            Generate
+          </button>
+        )}
       </div>
       
       <div className="px-4 py-3 flex-1 flex flex-col min-h-0 gap-3">
-        <select 
-          className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs rounded-full px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary appearance-none hover:bg-slate-800 transition-colors cursor-pointer"
-          defaultValue=""
-          onChange={(e) => {
-            const val = parseInt(e.target.value);
-            if (!isNaN(val) && TEMPLATES[val]) setCode(TEMPLATES[val].code);
-            e.target.value = '';
-          }}
-        >
-          <option value="" disabled>Load Complex Example...</option>
-          {TEMPLATES.map((t, i) => (
-            <option key={i} value={i}>{t.title}</option>
-          ))}
-        </select>
-        
-        <div className="flex-1 rounded-xl overflow-hidden relative border border-slate-800">
-          <Editor
-            height="100%"
-            language="erd-dsl"
-            theme="erd-theme"
-            value={code}
-            onChange={(val) => setCode(val || '')}
-            beforeMount={handleEditorWillMount}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 13,
-              fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              wordWrap: 'on',
-              padding: { top: 16 }
+        {activeTab === 'dsl' ? (
+          <select 
+            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs rounded-full px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary appearance-none hover:bg-slate-800 transition-colors cursor-pointer"
+            defaultValue=""
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              if (!isNaN(val) && TEMPLATES[val]) setCode(TEMPLATES[val].code);
+              e.target.value = '';
             }}
-          />
+          >
+            <option value="" disabled>Load Complex Example...</option>
+            {TEMPLATES.map((t, i) => (
+              <option key={i} value={i}>{t.title}</option>
+            ))}
+          </select>
+        ) : (
+          <select 
+            className="w-full bg-slate-800/50 border border-slate-700/50 text-slate-300 text-xs rounded-full px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary appearance-none hover:bg-slate-800 transition-colors cursor-pointer"
+            defaultValue=""
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              if (!isNaN(val) && SQL_TEMPLATES[val]) setSqlCode(SQL_TEMPLATES[val].code);
+              e.target.value = '';
+            }}
+          >
+            <option value="" disabled>Load SQL Example...</option>
+            {SQL_TEMPLATES.map((t, i) => (
+              <option key={i} value={i}>{t.title}</option>
+            ))}
+          </select>
+        )}
+        
+        <div className="flex-1 rounded-xl overflow-hidden relative border border-slate-800 bg-[#1e1e1e]">
+          {activeTab === 'dsl' ? (
+            <Editor
+              height="100%"
+              language="erd-dsl"
+              theme="erd-theme"
+              value={code}
+              onChange={(val) => setCode(val || '')}
+              beforeMount={handleEditorWillMount}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                padding: { top: 16 }
+              }}
+            />
+          ) : (
+            <Editor
+              height="100%"
+              language="sql"
+              theme="vs-dark"
+              value={sqlCode}
+              onChange={(val) => setSqlCode(val || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                padding: { top: 16 }
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 };
+

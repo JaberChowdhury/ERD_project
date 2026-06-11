@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import dagre from "dagre";
 import LZString from "lz-string";
+import { decompressFromUrl } from "../lib/compress";
 import { parseCode } from "../lib/parser";
 import type { TableData, RelationshipData } from "../lib/parser";
 
@@ -129,50 +130,68 @@ users.id - tenant_profiles.userId
 users.id < properties.ownerId
 users.id < properties.postedById`;
 
+export const DEFAULT_SETTINGS: CanvasSettings = {
+  nodesep: 60,
+  ranksep: 250,
+  pathType: "bezier",
+  pathAnimation: true,
+  edgeArrows: true,
+  edgeThickness: 2,
+  tableShadow: true,
+  shadowBlur: 15,
+  fieldStriping: true,
+  headerHeight: 48,
+  rowPadding: 10,
+  minTableWidth: 260,
+  contentPadding: 16,
+  borderRadius: "1.5rem", // 24px default
+  fontFamily: "ui-sans-serif, system-ui, sans-serif",
+  fontWeight: "normal",
+  fontSize: 12,
+  iconSize: 16,
+};
+
 const getInitialState = () => {
   const defaultState = {
     code: initialCode,
-    settings: {
-      nodesep: 60,
-      ranksep: 250,
-      pathType: "bezier" as const,
-      pathAnimation: true,
-      edgeArrows: true,
-      edgeThickness: 2,
-      tableShadow: true,
-      shadowBlur: 15,
-      fieldStriping: true,
-      headerHeight: 48,
-      rowPadding: 10,
-      minTableWidth: 260,
-      contentPadding: 16,
-      borderRadius: "1.5rem", // 24px default
-      fontFamily: "ui-sans-serif, system-ui, sans-serif",
-      fontWeight: "normal",
-      fontSize: 12,
-      iconSize: 16,
-    },
+    settings: { ...DEFAULT_SETTINGS },
   };
 
   try {
     const hash = window.location.hash;
-    if (hash && hash.startsWith("#data=")) {
-      const compressed = hash.substring(6);
-      const decompressed =
-        LZString.decompressFromEncodedURIComponent(compressed);
-      if (decompressed) {
-        const parsed = JSON.parse(decompressed);
-        if (parsed.code) defaultState.code = parsed.code;
-        if (parsed.settings)
-          defaultState.settings = {
-            ...defaultState.settings,
-            ...parsed.settings,
-          };
+    if (hash && hash.startsWith("#data")) {
+      const equalsIndex = hash.indexOf("=");
+      if (equalsIndex !== -1) {
+        const compressed = hash.substring(equalsIndex + 1);
+        let decompressed;
+        try {
+          // Try fflate new format first
+          decompressed = decompressFromUrl(compressed);
+        } catch (e) {
+          // Fallback to legacy lz-string
+          decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+        }
+
+        if (decompressed) {
+          const parsed = JSON.parse(decompressed);
+          if (parsed.code || parsed.c) defaultState.code = parsed.code || parsed.c;
+          const parsedSettings = parsed.settings || parsed.s;
+          if (parsedSettings) {
+            defaultState.settings = {
+              ...defaultState.settings,
+              ...parsedSettings,
+            };
+          }
+        }
       }
     } else if (hash && hash.startsWith("#code=")) {
       const compressed = hash.substring(6);
-      const decompressed =
-        LZString.decompressFromEncodedURIComponent(compressed);
+      let decompressed;
+      try {
+        decompressed = decompressFromUrl(compressed);
+      } catch (e) {
+        decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+      }
       if (decompressed) defaultState.code = decompressed;
     }
   } catch (e) {
@@ -339,7 +358,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     setTimeout(() => {
       const el = document.getElementById("canvas-container");
-      if (el) get().resetView(el.clientWidth, el.clientHeight);
-    }, 50);
+      if (el) {
+        const { width, height } = el.getBoundingClientRect();
+        get().resetView(width, height);
+      }
+    }, 10);
   },
 }));
