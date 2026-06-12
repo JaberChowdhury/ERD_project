@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   // Ensure that Tailwind CSS works without problems in Next.js app directory
-  serverExternalPackages: ['@resvg/resvg-js', 'better-sqlite3', 'bun:sqlite'],
+  serverExternalPackages: ['@resvg/resvg-js'],
 }
 
 export default nextConfig;
