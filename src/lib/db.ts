@@ -4,7 +4,9 @@ let Database: any;
 
 // Use bun:sqlite if running in a Bun environment, otherwise fallback to better-sqlite3 (e.g. Vercel Node.js)
 if (typeof process !== 'undefined' && process.versions && (process.versions as any).bun) {
-  Database = require('bun:sqlite').Database;
+  // Hide the require string from static analyzers like @vercel/nft
+  const moduleName = 'bun' + ':sqlite';
+  Database = require(moduleName).Database;
 } else {
   Database = require('better-sqlite3');
 }
