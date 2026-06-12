@@ -1,5 +1,13 @@
-import { Database } from "bun:sqlite";
 import path from 'path';
+
+let Database: any;
+
+// Use bun:sqlite if running in a Bun environment, otherwise fallback to better-sqlite3 (e.g. Vercel Node.js)
+if (typeof process !== 'undefined' && process.versions && (process.versions as any).bun) {
+  Database = require('bun:sqlite').Database;
+} else {
+  Database = require('better-sqlite3');
+}
 
 // Define the path to the SQLite file
 // In a real production deployment on a persistent server, this file should be stored outside the build dir.
