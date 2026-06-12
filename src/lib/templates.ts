@@ -1,6 +1,6 @@
 export const TEMPLATES = [
   {
-    title: 'E-Commerce Platform',
+    title: "E-Commerce Platform",
     code: `users [icon: user, color: #3b82f6] {
   id string pk
   email string
@@ -64,10 +64,10 @@ categories.id < products.categoryId
 orders.id < order_items.orderId
 products.id < order_items.productId
 users.id < reviews.userId
-products.id < reviews.productId`
+products.id < reviews.productId`,
   },
   {
-    title: 'Social Media Engine',
+    title: "Social Media Engine",
     code: `users [icon: user, color: #3b82f6] {
   id string pk
   username string
@@ -125,7 +125,7 @@ posts.id <> likes.postId
 users.id <> follows.followerId
 users.id <> follows.followingId
 users.id < messages.senderId
-users.id < messages.receiverId`
+users.id < messages.receiverId`,
   },
   {
     title: "very complex example",
@@ -435,10 +435,10 @@ subscriptions.id < payment_transactions.subscriptionId
 
 users.id < audit_logs.userId
 users.id < notifications.userId
-    `
+    `,
   },
   {
-    title: 'Enterprise ERP',
+    title: "Enterprise ERP",
     code: `employees [icon: user, color: #3b82f6] {
   id string pk
   departmentId string
@@ -507,13 +507,13 @@ departments.id < projects.departmentId
 employees.id <> employee_projects.employeeId
 projects.id <> employee_projects.projectId
 suppliers.id < inventory.supplierId
-suppliers.id < invoices.supplierId`
-  }
+suppliers.id < invoices.supplierId`,
+  },
 ];
 
 export const SQL_TEMPLATES = [
   {
-    title: 'E-Commerce SQL',
+    title: "E-Commerce SQL",
     code: `CREATE TABLE users (
   id INT PRIMARY KEY,
   email VARCHAR(255),
@@ -557,10 +557,10 @@ ALTER TABLE products ADD CONSTRAINT fk_product_category FOREIGN KEY (category_id
 ALTER TABLE orders ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id);
 ALTER TABLE order_items ADD CONSTRAINT fk_item_order FOREIGN KEY (order_id) REFERENCES orders(id);
 ALTER TABLE order_items ADD CONSTRAINT fk_item_product FOREIGN KEY (product_id) REFERENCES products(id);
-`
+`,
   },
   {
-    title: 'Blog / Social Media SQL',
+    title: "Blog / Social Media SQL",
     code: `CREATE TABLE users (
   id INT PRIMARY KEY,
   username VARCHAR(50),
@@ -588,6 +588,242 @@ CREATE TABLE comments (
 ALTER TABLE posts ADD CONSTRAINT fk_post_author FOREIGN KEY (author_id) REFERENCES users(id);
 ALTER TABLE comments ADD CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES posts(id);
 ALTER TABLE comments ADD CONSTRAINT fk_comment_author FOREIGN KEY (author_id) REFERENCES users(id);
-`
-  }
+`,
+  },
+  {
+    title: "QR Thikana",
+    code: `
+    -- WARNING: This schema is for context only and is not meant to be run.
+    -- Table order and constraints may not be valid for execution.
+
+    CREATE TABLE public.matches (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user1_id uuid NOT NULL,
+      user2_id uuid NOT NULL,
+      duration_seconds integer NOT NULL DEFAULT 0,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT matches_pkey PRIMARY KEY (id),
+      CONSTRAINT matches_user1_id_users_id_fk FOREIGN KEY (user1_id) REFERENCES public.users(id),
+      CONSTRAINT matches_user2_id_users_id_fk FOREIGN KEY (user2_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.transactions (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      amount integer NOT NULL,
+      reason text NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT transactions_pkey PRIMARY KEY (id),
+      CONSTRAINT transactions_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.users (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      username text NOT NULL,
+      avatar_url text,
+      coins integer NOT NULL DEFAULT 100,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      email text UNIQUE,
+      supabase_id uuid UNIQUE,
+      bio text,
+      selected_avatar text DEFAULT 'ghost'::text,
+      cover_image text,
+      mood text DEFAULT 'Chillin'' in the shadows 😎'::text,
+      theme_preference text DEFAULT 'system'::text,
+      accent_color text DEFAULT 'bg-purple-500'::text,
+      show_online_status boolean NOT NULL DEFAULT true,
+      hide_from_search boolean NOT NULL DEFAULT false,
+      pinned_badges jsonb DEFAULT '[]'::jsonb,
+      equipped_avatar_decoration text,
+      equipped_name_animation text,
+      profile_visibility text NOT NULL DEFAULT 'public'::text,
+      CONSTRAINT users_pkey PRIMARY KEY (id)
+    );
+    CREATE TABLE public.blocked_users (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      blocker_device_id text NOT NULL,
+      blocked_device_id text NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT blocked_users_pkey PRIMARY KEY (id)
+    );
+    CREATE TABLE public.reports (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      reporter_device_id text NOT NULL,
+      reported_device_id text NOT NULL,
+      reported_ip text,
+      reason text NOT NULL,
+      notes text,
+      status text NOT NULL DEFAULT 'pending'::text,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT reports_pkey PRIMARY KEY (id)
+    );
+    CREATE TABLE public.chat_messages (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      session_id uuid NOT NULL,
+      sender_type text NOT NULL,
+      text text NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+      CONSTRAINT chat_messages_session_id_chat_sessions_id_fk FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id)
+    );
+    CREATE TABLE public.chat_sessions (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_supabase_id uuid NOT NULL,
+      partner_alias text NOT NULL,
+      partner_avatar text DEFAULT 'ghost'::text,
+      last_message text,
+      message_count integer NOT NULL DEFAULT 0,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT chat_sessions_pkey PRIMARY KEY (id)
+    );
+    CREATE TABLE public.banned_ips (
+      ip text NOT NULL,
+      reason text NOT NULL,
+      banned_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT banned_ips_pkey PRIMARY KEY (ip)
+    );
+    CREATE TABLE public.user_inventory (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      item_type text NOT NULL,
+      item_id text NOT NULL,
+      purchased_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT user_inventory_pkey PRIMARY KEY (id),
+      CONSTRAINT user_inventory_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT user_inventory_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.posts (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      content text,
+      image_url text,
+      privacy_mode text NOT NULL DEFAULT 'public'::text,
+      original_post_id uuid,
+      settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+      upvote_count integer NOT NULL DEFAULT 0,
+      coin_rewarded_at_5 boolean NOT NULL DEFAULT false,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      title text,
+      CONSTRAINT posts_pkey PRIMARY KEY (id),
+      CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT posts_original_post_id_fkey FOREIGN KEY (original_post_id) REFERENCES public.posts(id)
+    );
+    CREATE TABLE public.post_access_requests (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      post_id uuid NOT NULL,
+      requester_id uuid NOT NULL,
+      status text NOT NULL DEFAULT 'pending'::text,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT post_access_requests_pkey PRIMARY KEY (id),
+      CONSTRAINT post_access_requests_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id),
+      CONSTRAINT post_access_requests_requester_id_fkey FOREIGN KEY (requester_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.comments (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      post_id uuid NOT NULL,
+      user_id uuid NOT NULL,
+      content text NOT NULL,
+      parent_comment_id uuid,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      upvote_count integer NOT NULL DEFAULT 0,
+      CONSTRAINT comments_pkey PRIMARY KEY (id),
+      CONSTRAINT comments_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id),
+      CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT comments_parent_comment_id_fkey FOREIGN KEY (parent_comment_id) REFERENCES public.comments(id)
+    );
+    CREATE TABLE public.post_reports (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      post_id uuid NOT NULL,
+      reporter_id uuid NOT NULL,
+      reason text NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT post_reports_pkey PRIMARY KEY (id),
+      CONSTRAINT post_reports_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id),
+      CONSTRAINT post_reports_reporter_id_fkey FOREIGN KEY (reporter_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.hidden_posts (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      post_id uuid NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT hidden_posts_pkey PRIMARY KEY (id),
+      CONSTRAINT hidden_posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT hidden_posts_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id)
+    );
+    CREATE TABLE public.post_votes (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      post_id uuid NOT NULL,
+      user_id uuid NOT NULL,
+      vote_type text NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT post_votes_pkey PRIMARY KEY (id),
+      CONSTRAINT post_votes_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id),
+      CONSTRAINT post_votes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.comment_votes (
+      comment_id uuid NOT NULL,
+      user_id uuid NOT NULL,
+      vote_type text CHECK (vote_type = ANY (ARRAY['upvote'::text, 'downvote'::text])),
+      CONSTRAINT comment_votes_pkey PRIMARY KEY (comment_id, user_id),
+      CONSTRAINT comment_votes_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES public.comments(id),
+      CONSTRAINT comment_votes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.saved_posts (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      post_id uuid NOT NULL,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT saved_posts_pkey PRIMARY KEY (id),
+      CONSTRAINT saved_posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT saved_posts_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.posts(id)
+    );
+    CREATE TABLE public.shop_items (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      name text NOT NULL,
+      category text NOT NULL,
+      type text NOT NULL,
+      price integer NOT NULL,
+      badge text,
+      color text,
+      description text,
+      media_url text,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT shop_items_pkey PRIMARY KEY (id)
+    );
+    CREATE TABLE public.friendships (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      sender_id uuid NOT NULL,
+      receiver_id uuid NOT NULL,
+      status text NOT NULL DEFAULT 'pending'::text,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT friendships_pkey PRIMARY KEY (id),
+      CONSTRAINT friendships_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
+      CONSTRAINT friendships_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.direct_messages (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      friendship_id uuid NOT NULL,
+      sender_id uuid NOT NULL,
+      text text NOT NULL,
+      read boolean NOT NULL DEFAULT false,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      reply_to_text text,
+      reaction text,
+      voice_url text,
+      CONSTRAINT direct_messages_pkey PRIMARY KEY (id),
+      CONSTRAINT direct_messages_friendship_id_fkey FOREIGN KEY (friendship_id) REFERENCES public.friendships(id),
+      CONSTRAINT direct_messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id)
+    );
+    CREATE TABLE public.notifications (
+      id uuid NOT NULL DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL,
+      actor_id uuid NOT NULL,
+      type text NOT NULL,
+      reference_id uuid,
+      is_read boolean NOT NULL DEFAULT false,
+      created_at timestamp without time zone NOT NULL DEFAULT now(),
+      CONSTRAINT notifications_pkey PRIMARY KEY (id),
+      CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+      CONSTRAINT notifications_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id)
+    );
+    `,
+  },
 ];

@@ -4,6 +4,7 @@ import LZString from "lz-string";
 import { decompressFromUrl } from "../lib/compress";
 import { parseCode } from "../lib/parser";
 import type { TableData, RelationshipData } from "../lib/parser";
+import { decodeSchema, schemaToCode } from "../lib/schemaEncoder";
 
 export interface NodeLayout {
   id: string;
@@ -158,8 +159,45 @@ const getInitialState = () => {
   };
 
   try {
+    if (typeof window === "undefined") return defaultState;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const shareId = searchParams.get("share");
+    
+    if (shareId) {
+      defaultState.code = "// Loading shared diagram from server...";
+      fetch(`/api/share?id=${shareId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.payload) {
+            try {
+              const decodedSchema = decodeSchema(data.payload);
+              useAppStore.getState().setCode(schemaToCode(decodedSchema));
+              useAppStore.getState().compile();
+            } catch (e) {
+              useAppStore.getState().setCode("// Error decoding diagram payload");
+            }
+          } else if (data.error) {
+            useAppStore.getState().setCode(`// Error: ${data.error}`);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load shared diagram", err);
+          useAppStore.getState().setCode("// Error loading diagram from server");
+        });
+      return defaultState; // Skip hash parsing if we are loading from server
+    }
+
     const hash = window.location.hash;
-    if (hash && hash.startsWith("#data")) {
+    if (hash && hash.startsWith("#data4=")) {
+      const compressed = hash.substring(7);
+      try {
+        const decodedSchema = decodeSchema(compressed);
+        defaultState.code = schemaToCode(decodedSchema);
+      } catch (e) {
+        console.error("Failed to decode level 4 hash", e);
+      }
+    } else if (hash && hash.startsWith("#data")) {
       const equalsIndex = hash.indexOf("=");
       if (equalsIndex !== -1) {
         const compressed = hash.substring(equalsIndex + 1);

@@ -4,6 +4,10 @@ export interface FieldData {
   isPk: boolean;
 }
 
+export interface Schema {
+  tables: TableData[];
+  relationships: RelationshipData[];
+}
 export interface TableData {
   name: string;
   meta: Record<string, string>;

@@ -9,6 +9,8 @@ import {
 import { useAppStore, DEFAULT_SETTINGS } from "../store/useAppStore";
 import { Share2, Copy, Check } from "lucide-react";
 import { compressToUrl } from "../lib/compress";
+import { parseCode } from "../lib/parser";
+import { encodeSchema } from "../lib/schemaEncoder";
 
 export const ShareDialog = ({
   children,
@@ -33,6 +35,31 @@ export const ShareDialog = ({
       code = code.replace(/\s*\[.*?\]\s*\{/g, ' {');
     }
 
+    if (level === 4 || level === 5) {
+      const parsed = parseCode(code);
+      const encoded = encodeSchema(parsed);
+      const baseUrl = window.location.href.split('#')[0].split('?')[0];
+      
+      if (level === 5) {
+        setUrl("Generating tiny URL...");
+        fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload: encoded })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) setUrl(`${baseUrl}?share=${data.id}`);
+          else setUrl("Error generating link");
+        })
+        .catch(() => setUrl("Error generating link"));
+        return;
+      }
+      
+      setUrl(`${baseUrl}#data4=${encoded}`);
+      return;
+    }
+
     // Only include settings that differ from defaults
     const diffSettings: Record<string, any> = {};
     for (const key in settings) {
@@ -51,7 +78,7 @@ export const ShareDialog = ({
     
     // Use #data1, #data2, #data3 based on the level as requested by the user
     // However, they all decompress identically since the data itself is minified.
-    const baseUrl = window.location.href.split('#')[0];
+    const baseUrl = window.location.href.split('#')[0].split('?')[0];
     setUrl(`${baseUrl}#data${level}=${compressed}`);
   };
 
@@ -87,7 +114,7 @@ export const ShareDialog = ({
             </div>
             
             <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl">
-              {[1, 2, 3].map((l) => (
+              {[1, 2, 3, 4, 5].map((l) => (
                 <button
                   key={l}
                   onClick={() => setLevel(l)}
@@ -97,21 +124,17 @@ export const ShareDialog = ({
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
-                  Level {l}
+                  Lvl {l}
                 </button>
               ))}
             </div>
             
             <div className="bg-slate-50/80 dark:bg-slate-800/80 p-4 rounded-2xl text-sm text-slate-600 dark:text-slate-300 min-h[80px]">
-              {level === 1 && (
-                <p><strong>Lossless:</strong> Preserves exact formatting, spaces, and styling. Best for editing.</p>
-              )}
-              {level === 2 && (
-                <p><strong>Minify Spaces (Lossy):</strong> Strips formatting and indentation to save space. Diagram remains functionally identical.</p>
-              )}
-              {level === 3 && (
-                <p><strong>Strip Styling (Extreme):</strong> Removes all table icons and custom colors to achieve the absolute smallest URL.</p>
-              )}
+              {level === 1 && <p><strong>Level 1:</strong> Preserves formatting and styling exactly.</p>}
+              {level === 2 && <p><strong>Level 2:</strong> Strips whitespace to save space.</p>}
+              {level === 3 && <p><strong>Level 3:</strong> Removes visual metadata for smaller URLs.</p>}
+              {level === 4 && <p><strong>Level 4:</strong> Extreme binary compression for maximum reduction.</p>}
+              {level === 5 && <p><strong>Level 5 (Tiny URL):</strong> Saves extreme binary to the server and returns a tiny ID link.</p>}
             </div>
           </div>
 
