@@ -29,7 +29,7 @@ export const generateNativeSvgString = (dashOffset = 0): { svgString: string, wi
 
   const svgString = renderToString(
     React.createElement(ExportSvgRenderer, {
-      tables, relationships, nodesLayout, isDark, dashOffset, width, height, minX, minY
+      settings: store.canvasSettings, tables, relationships, nodesLayout, isDark, dashOffset, width, height, minX, minY
     })
   );
 
@@ -103,19 +103,12 @@ export const downloadAsGif = async (scale: number = 1.5, framesCount: number = 1
   
   try {
     const frameImages: string[] = [];
-    // Calculate safe scale to prevent Out-Of-Memory browser crashes at 8x resolution
     const { width, height } = generateNativeSvgString();
-    const maxDimension = 1920; // Cap at 1080p equivalent
-    let safeScale = scale;
-    if (width * scale > maxDimension || height * scale > maxDimension) {
-      safeScale = Math.min(maxDimension / width, maxDimension / height);
-      store.addExportLog(`[Warning] Auto-downscaled from ${scale}x to ${safeScale.toFixed(2)}x to prevent browser crash.`);
-    }
     
     for(let i=0; i<framesCount; i++) {
       const offset = -18 * (i / framesCount);
       const { svgString } = generateNativeSvgString(offset);
-      const canvas = await svgToCanvas(svgString, width, height, safeScale);
+      const canvas = await svgToCanvas(svgString, width, height, scale);
       // Use JPEG with 0.8 quality instead of PNG to reduce memory footprint of the array by ~80%
       frameImages.push(canvas.toDataURL('image/jpeg', 0.8));
       store.setExportState(true, 'Rendering GIF...', 10 + Math.round((i/framesCount)*40));
@@ -151,3 +144,104 @@ export const downloadAsGif = async (scale: number = 1.5, framesCount: number = 1
 
 const getImgWidth = (url: string): Promise<number> => new Promise(res => { const i = new Image(); i.onload = ()=>res(i.width); i.src = url; });
 const getImgHeight = (url: string): Promise<number> => new Promise(res => { const i = new Image(); i.onload = ()=>res(i.height); i.src = url; });
+export const serverDownloadAsSvg = async () => {
+  const store = useAppStore.getState();
+  store.setExportState(true, 'Server compiling SVG...', 50);
+  store.addExportLog('[Server] Requesting SVG compilation from server...');
+  
+  try {
+    const payload = {
+      tables: store.tables,
+      relationships: store.relationships,
+      nodesLayout: store.nodesLayout,
+      settings: store.canvasSettings,
+      isDark: document.documentElement.classList.contains('dark'),
+    };
+
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'svg', payload, options: {} })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    const dataUrl = URL.createObjectURL(blob);
+    
+    store.addExportLog('[Success] SVG Returned from Server. Opening preview...');
+    store.setPreview(dataUrl, 'svg');
+    store.setExportState(false);
+  } catch(e) {
+    store.addExportLog(`[Error] ${e}`);
+    store.setExportState(false);
+  }
+};
+
+export const serverDownloadAsPng = async (scale: number = 2) => {
+  const store = useAppStore.getState();
+  store.setExportState(true, 'Server rendering PNG...', 50);
+  store.addExportLog('[Server] Requesting PNG rasterization from server...');
+  
+  try {
+    const payload = {
+      tables: store.tables,
+      relationships: store.relationships,
+      nodesLayout: store.nodesLayout,
+      settings: store.canvasSettings,
+      isDark: document.documentElement.classList.contains('dark'),
+    };
+
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'png', payload, options: { scale } })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    const dataUrl = URL.createObjectURL(blob);
+    
+    store.addExportLog('[Success] PNG Returned from Server. Opening preview...');
+    store.setPreview(dataUrl, 'png');
+    store.setExportState(false);
+  } catch(e) {
+    store.addExportLog(`[Error] ${e}`);
+    store.setExportState(false);
+  }
+};
+
+export const serverDownloadAsGif = async (scale: number = 1.5, framesCount: number = 15, delay: number = 66) => {
+  const store = useAppStore.getState();
+  store.setExportState(true, 'Server rendering GIF...', 50);
+  store.addExportLog('[Server] Requesting animated GIF encoding from server...');
+  
+  try {
+    const payload = {
+      tables: store.tables,
+      relationships: store.relationships,
+      nodesLayout: store.nodesLayout,
+      settings: store.canvasSettings,
+      isDark: document.documentElement.classList.contains('dark'),
+    };
+
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'gif', payload, options: { scale, framesCount, delay } })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    const dataUrl = URL.createObjectURL(blob);
+    
+    store.addExportLog('[Success] GIF Returned from Server. Opening preview...');
+    store.setPreview(dataUrl, 'gif');
+    store.setExportState(false);
+  } catch(e) {
+    store.addExportLog(`[Error] ${e}`);
+    store.setExportState(false);
+  }
+};

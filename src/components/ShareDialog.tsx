@@ -35,31 +35,6 @@ export const ShareDialog = ({
       code = code.replace(/\s*\[.*?\]\s*\{/g, ' {');
     }
 
-    if (level === 4 || level === 5) {
-      const parsed = parseCode(code);
-      const encoded = encodeSchema(parsed);
-      const baseUrl = window.location.href.split('#')[0].split('?')[0];
-      
-      if (level === 5) {
-        setUrl("Generating tiny URL...");
-        fetch('/api/share', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: encoded })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.id) setUrl(`${baseUrl}?share=${data.id}`);
-          else setUrl("Error generating link");
-        })
-        .catch(() => setUrl("Error generating link"));
-        return;
-      }
-      
-      setUrl(`${baseUrl}#data4=${encoded}`);
-      return;
-    }
-
     // Only include settings that differ from defaults
     const diffSettings: Record<string, any> = {};
     for (const key in settings) {
@@ -75,7 +50,33 @@ export const ShareDialog = ({
     
     const payload = JSON.stringify(payloadObj);
     const compressed = compressToUrl(payload);
-    
+
+    if (level === 4 || level === 5) {
+      const parsed = parseCode(code);
+      const encoded = encodeSchema(parsed);
+      const baseUrl = window.location.href.split('#')[0].split('?')[0];
+      
+      if (level === 5) {
+        setUrl("Generating tiny URL...");
+        // Use 'compressed' instead of 'encoded' to preserve colors and icons!
+        fetch('/api/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload: compressed })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) setUrl(`${baseUrl}?share=${data.id}`);
+          else setUrl("Error generating link");
+        })
+        .catch(() => setUrl("Error generating link"));
+        return;
+      }
+      
+      setUrl(`${baseUrl}#data4=${encoded}`);
+      return;
+    }
+
     // Use #data1, #data2, #data3 based on the level as requested by the user
     // However, they all decompress identically since the data itself is minified.
     const baseUrl = window.location.href.split('#')[0].split('?')[0];

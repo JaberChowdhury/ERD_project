@@ -7,8 +7,8 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { downloadAsPng, downloadAsSvg, downloadAsGif } from "../lib/export";
-import { ImageIcon, Video } from "lucide-react";
+import { downloadAsPng, downloadAsSvg, downloadAsGif, serverDownloadAsPng, serverDownloadAsSvg, serverDownloadAsGif } from "../lib/export";
+import { ImageIcon, Video, Server, Laptop } from "lucide-react";
 
 export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
@@ -16,6 +16,7 @@ export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
   const [gifScale, setGifScale] = useState(1);
   const [gifFrames, setGifFrames] = useState(15);
   const [gifDelay, setGifDelay] = useState(66);
+  const [activeTab, setActiveTab] = useState<"client" | "server">("client");
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -26,6 +27,25 @@ export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
         <DialogHeader>
           <DialogTitle>Export Options</DialogTitle>
         </DialogHeader>
+
+        <div className="flex bg-slate-800 p-1 rounded-xl mb-2 mt-2">
+          <button
+            onClick={() => setActiveTab("client")}
+            className={`flex-1 flex items-center justify-center gap-2 text-xs py-2 rounded-lg transition-colors font-medium ${
+              activeTab === "client" ? "bg-indigo-500 text-white shadow" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Laptop className="w-3.5 h-3.5" /> Client Render
+          </button>
+          <button
+            onClick={() => setActiveTab("server")}
+            className={`flex-1 flex items-center justify-center gap-2 text-xs py-2 rounded-lg transition-colors font-medium ${
+              activeTab === "server" ? "bg-indigo-500 text-white shadow" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Server className="w-3.5 h-3.5" /> Server Render
+          </button>
+        </div>
         <div className="grid gap-6 py-4">
           <div className="space-y-4 border-b border-slate-800 pb-4">
             <h4 className="text-sm font-semibold flex items-center gap-2">
@@ -60,7 +80,7 @@ export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
               <Button
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full border-0"
                 onClick={() => {
-                  downloadAsPng(pngScale);
+                  activeTab === "client" ? downloadAsPng(pngScale) : serverDownloadAsPng(pngScale);
                   setOpen(false);
                 }}
               >
@@ -69,7 +89,7 @@ export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
               <Button
                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-white rounded-full border border-slate-700"
                 onClick={() => {
-                  downloadAsSvg();
+                  activeTab === "client" ? downloadAsSvg() : serverDownloadAsSvg();
                   setOpen(false);
                 }}
               >
@@ -131,7 +151,9 @@ export const ExportDialog = ({ children }: { children: React.ReactNode }) => {
             <Button
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full border-0 font-medium h-10 mt-2"
               onClick={() => {
-                downloadAsGif(gifScale);
+                activeTab === "client" 
+                  ? downloadAsGif(gifScale, gifFrames, gifDelay) 
+                  : serverDownloadAsGif(gifScale, gifFrames, gifDelay);
                 setOpen(false);
               }}
             >

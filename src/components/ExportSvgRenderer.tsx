@@ -3,8 +3,10 @@ import { icons } from "lucide-react";
 import type { TableData, RelationshipData } from "../lib/parser";
 import { colorMap } from "../lib/constants";
 import { useAppStore } from "../store/useAppStore";
+import { CanvasSettings } from "../store/useAppStore";
 
 interface ExportSvgRendererProps {
+  settings: CanvasSettings;
   tables: TableData[];
   relationships: RelationshipData[];
   nodesLayout: Record<
@@ -29,8 +31,8 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
   height,
   minX,
   minY,
+  settings,
 }) => {
-  const settings = useAppStore.getState().canvasSettings;
   const bgColor = isDark ? "#020617" : "#f8fafc";
   const textColor = isDark ? "#f8fafc" : "#0f172a";
   const mutedColor = isDark ? "#64748b" : "#94a3b8";
