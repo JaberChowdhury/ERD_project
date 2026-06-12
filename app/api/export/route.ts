@@ -5,7 +5,7 @@ import React from "react";
 import { ExportSvgRenderer } from "../../../src/components/ExportSvgRenderer";
 
 async function generateSvgString(payload: any, offset = 0) {
-  const { tables, relationships, nodesLayout, settings, isDark } = payload;
+  const { tables, relationships, nodesLayout, settings, isDark, usedIcons } = payload;
   
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   Object.values(nodesLayout).forEach((node: any) => {
@@ -25,7 +25,7 @@ async function generateSvgString(payload: any, offset = 0) {
 
   const svgString = renderToString(
     React.createElement(ExportSvgRenderer, {
-      settings, tables, relationships, nodesLayout, isDark, dashOffset: offset, width, height, minX, minY
+      settings, tables, relationships, nodesLayout, isDark, dashOffset: offset, width, height, minX, minY, usedIcons
     })
   );
 

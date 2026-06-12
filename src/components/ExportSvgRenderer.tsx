@@ -1,5 +1,4 @@
 import React from "react";
-import { icons } from "lucide-react";
 import type { TableData, RelationshipData } from "../lib/parser";
 import { colorMap } from "../lib/constants";
 import { useAppStore } from "../store/useAppStore";
@@ -19,6 +18,8 @@ interface ExportSvgRendererProps {
   height: number;
   minX: number;
   minY: number;
+  usedIcons?: Record<string, string>;
+  renderIcon?: (name: string, color: string, size: number) => React.ReactNode;
 }
 
 export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
@@ -32,6 +33,8 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
   minX,
   minY,
   settings,
+  usedIcons,
+  renderIcon,
 }) => {
   const bgColor = isDark ? "#020617" : "#f8fafc";
   const textColor = isDark ? "#f8fafc" : "#0f172a";
@@ -202,12 +205,6 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
           }
 
           const iconName = table.meta.icon || "table";
-          const pascalIcon = iconName
-            .split("-")
-            .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-            .join("");
-          const IconComponent =
-            icons[pascalIcon as keyof typeof icons] || icons["Table"];
 
           // Parse border radius logic (from string like '1.5rem' or '24px' to number)
           // Simplified fallback: if 'rem' is present, multiply by 16
@@ -259,7 +256,21 @@ export const ExportSvgRenderer: React.FC<ExportSvgRendererProps> = ({
               <g
                 transform={`translate(${settings.contentPadding}, ${(headerHeight - settings.iconSize) / 2})`}
               >
-                <IconComponent size={settings.iconSize} color="#ffffff" />
+                {renderIcon ? (
+                   renderIcon(iconName, "#ffffff", settings.iconSize)
+                ) : usedIcons && usedIcons[iconName] ? (
+                   <svg 
+                     width={settings.iconSize} 
+                     height={settings.iconSize} 
+                     viewBox="0 0 24 24" 
+                     fill="none" 
+                     stroke="#ffffff" 
+                     strokeWidth="2" 
+                     strokeLinecap="round" 
+                     strokeLinejoin="round"
+                     dangerouslySetInnerHTML={{ __html: usedIcons[iconName] }}
+                   />
+                ) : null}
               </g>
 
               {/* Title */}

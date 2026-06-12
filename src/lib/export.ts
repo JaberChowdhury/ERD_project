@@ -3,6 +3,7 @@ import gifshot from 'gifshot';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { ExportSvgRenderer } from '../components/ExportSvgRenderer';
+import { icons } from 'lucide-react';
 
 export const triggerDownload = (dataUrl: string, filename: string) => {
   const link = document.createElement('a');
@@ -27,9 +28,15 @@ export const generateNativeSvgString = (dashOffset = 0): { svgString: string, wi
   const height = Math.max(maxY - minY, 100);
   const isDark = document.documentElement.classList.contains('dark');
 
+  const renderIcon = (name: string, color: string, size: number) => {
+    const pascalIcon = name.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+    const IconComponent = icons[pascalIcon as keyof typeof icons] || icons["Table"];
+    return React.createElement(IconComponent, { color, size });
+  };
+
   const svgString = renderToString(
     React.createElement(ExportSvgRenderer, {
-      settings: store.canvasSettings, tables, relationships, nodesLayout, isDark, dashOffset, width, height, minX, minY
+      settings: store.canvasSettings, tables, relationships, nodesLayout, isDark, dashOffset, width, height, minX, minY, renderIcon
     })
   );
 
@@ -144,6 +151,23 @@ export const downloadAsGif = async (scale: number = 1.5, framesCount: number = 1
 
 const getImgWidth = (url: string): Promise<number> => new Promise(res => { const i = new Image(); i.onload = ()=>res(i.width); i.src = url; });
 const getImgHeight = (url: string): Promise<number> => new Promise(res => { const i = new Image(); i.onload = ()=>res(i.height); i.src = url; });
+
+const getUsedIcons = (tables: any[]) => {
+  const usedIcons: Record<string, string> = {};
+  tables.forEach(t => {
+    const name = t.meta.icon || 'table';
+    if (!usedIcons[name]) {
+       const pascal = name.split("-").map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join("");
+       const Comp = icons[pascal as keyof typeof icons] || icons['Table'];
+       const svgString = renderToString(React.createElement(Comp));
+       const match = svgString.match(/<svg[^>]*>(.*?)<\/svg>/);
+       if (match) {
+          usedIcons[name] = match[1];
+       }
+    }
+  });
+  return usedIcons;
+};
 export const serverDownloadAsSvg = async () => {
   const store = useAppStore.getState();
   store.setExportState(true, 'Server compiling SVG...', 50);
@@ -156,6 +180,7 @@ export const serverDownloadAsSvg = async () => {
       nodesLayout: store.nodesLayout,
       settings: store.canvasSettings,
       isDark: document.documentElement.classList.contains('dark'),
+      usedIcons: getUsedIcons(store.tables)
     };
 
     const res = await fetch('/api/export', {
@@ -190,6 +215,7 @@ export const serverDownloadAsPng = async (scale: number = 2) => {
       nodesLayout: store.nodesLayout,
       settings: store.canvasSettings,
       isDark: document.documentElement.classList.contains('dark'),
+      usedIcons: getUsedIcons(store.tables)
     };
 
     const res = await fetch('/api/export', {
@@ -224,6 +250,7 @@ export const serverDownloadAsGif = async (scale: number = 1.5, framesCount: numb
       nodesLayout: store.nodesLayout,
       settings: store.canvasSettings,
       isDark: document.documentElement.classList.contains('dark'),
+      usedIcons: getUsedIcons(store.tables)
     };
 
     const res = await fetch('/api/export', {
