@@ -18,7 +18,6 @@ const Loader = () => (
 function App() {
   const code = useAppStore(state => state.code);
   const compile = useAppStore(state => state.compile);
-  const setHandMode = useAppStore(state => state.setHandMode);
   const theme = useAppStore(state => state.theme);
 
   useEffect(() => {
@@ -35,32 +34,13 @@ function App() {
   useEffect(() => {
     // Auto-compile on first load to render shared schema
     setTimeout(() => {
-      useAppStore.getState().compile();
+      useAppStore.getState().compile(true);
     }, 100);
   }, []);
 
   useEffect(() => {
     compile();
   }, [code, compile]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'h' && document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'INPUT') {
-        setHandMode(true);
-      }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'h') {
-        setHandMode(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [setHandMode]);
 
   return (
     <div className="flex h-[100dvh] w-screen overflow-hidden bg-background text-foreground font-sans transition-colors duration-300">

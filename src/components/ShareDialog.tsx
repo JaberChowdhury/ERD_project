@@ -94,7 +94,7 @@ export const ShareDialog = ({
   };
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => { if (open) generateUrl(); }}>
       <DialogTrigger render={children} />
       <DialogContent className="min-w-[320px] w-full max-w-[90vw] sm:max-w-[600px] bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl">
         <DialogHeader>

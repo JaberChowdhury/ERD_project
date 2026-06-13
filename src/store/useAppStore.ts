@@ -54,7 +54,6 @@ interface AppState {
   previewDataUrl: string | null;
   previewType: "svg" | "png" | "gif" | null;
   showGrid: boolean;
-  isHandMode: boolean;
   theme: "light" | "dark" | "system";
   canvasSettings: CanvasSettings;
 
@@ -73,10 +72,10 @@ interface AppState {
   setPreview: (url: string | null, type?: "svg" | "png" | "gif" | null) => void;
   clearExportLogs: () => void;
   setShowGrid: (show: boolean) => void;
-  setHandMode: (mode: boolean) => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   updateCanvasSettings: (settings: Partial<CanvasSettings>) => void;
-  compile: () => void;
+  compile: (shouldResetView?: boolean) => void;
+  compileTempDsl: (dsl: string, shouldResetView?: boolean) => void;
 }
 
 const initialCode = `users [icon: user, color: blue] {
@@ -257,13 +256,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   previewDataUrl: null,
   previewType: null,
   showGrid: true,
-  isHandMode: false,
   theme: "light", // Default sweet white
   canvasSettings: initialState.settings,
 
   setPreview: (url, type) =>
     set({ previewDataUrl: url, previewType: type || null }),
-  setHandMode: (mode) => set({ isHandMode: mode }),
   setTheme: (theme) => set({ theme }),
   updateCanvasSettings: (settings) => {
     set((state) => ({
@@ -341,9 +338,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ scale, translateX, translateY });
   },
 
-  compile: () => {
-    const { code, canvasSettings } = get();
-    const { tables, relationships } = parseCode(code);
+  compile: (shouldResetView = false) => {
+    get().compileTempDsl(get().code, shouldResetView);
+  },
+
+  compileTempDsl: (dsl: string, shouldResetView = false) => {
+    const { canvasSettings } = get();
+    let tables: TableData[] = [];
+    let relationships: RelationshipData[] = [];
+    
+    try {
+      const parsed = parseCode(dsl);
+      tables = parsed.tables;
+      relationships = parsed.relationships;
+    } catch (e) {
+      // If parsing fails, do not update the tables/relationships to avoid destroying the view while typing
+      return;
+    }
 
     const g = new dagre.graphlib.Graph();
     g.setGraph({
@@ -356,7 +367,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     g.setDefaultEdgeLabel(() => ({}));
 
     tables.forEach((t) => {
-      // Calculate dynamic width and height based on font sizes and spacing settings
       const headerHeight = Math.max(
         canvasSettings.headerHeight,
         Math.max(canvasSettings.iconSize, canvasSettings.fontSize + 4) + 8,
@@ -394,12 +404,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ tables, relationships, nodesLayout });
 
-    setTimeout(() => {
-      const el = document.getElementById("canvas-container");
-      if (el) {
-        const { width, height } = el.getBoundingClientRect();
-        get().resetView(width, height);
-      }
-    }, 10);
+    if (shouldResetView) {
+      setTimeout(() => {
+        const el = document.getElementById("canvas-container");
+        if (el) {
+          const { width, height } = el.getBoundingClientRect();
+          get().resetView(width, height);
+        }
+      }, 10);
+    }
   },
 }));

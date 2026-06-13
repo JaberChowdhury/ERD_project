@@ -4,6 +4,7 @@ import * as LucideIcons from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { colorMap } from "../lib/constants";
+import { toBlob } from "html-to-image";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -60,7 +61,6 @@ const TableNode = ({ table, layout }: { table: any; layout: any }) => {
   }
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (useAppStore.getState().isHandMode) return;
     e.stopPropagation();
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY, ix: layout.x, iy: layout.y });
@@ -98,8 +98,7 @@ const TableNode = ({ table, layout }: { table: any; layout: any }) => {
             ? "z-40 scale-[1.02]"
             : "z-30 hover:scale-[1.01]",
         isHovered && !isCustomColor && !isDragging && "ring-4 ring-primary/30",
-        isDragging && "z-50 scale-105 cursor-grabbing ring-4 ring-primary/40",
-        useAppStore.getState().isHandMode && "pointer-events-none",
+        isDragging && "z-50 scale-105 cursor-grabbing ring-4 ring-primary/40"
       )}
       style={{
         width: layout.width,
@@ -235,19 +234,50 @@ export const DiagramCanvas = () => {
 
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-
-  const isHandMode = useAppStore((s) => s.isHandMode);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, table: string | null } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (contextMenu) setContextMenu(null);
     if (
-      isHandMode ||
       e.target === containerRef.current ||
       (e.target as HTMLElement).closest("svg") ||
-      (e.target as HTMLElement).id === "zoom-layer"
+      (e.target as HTMLElement).id === "zoom-layer" ||
+      (e.target as HTMLElement).id === "nodes-layer"
     ) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - translateX, y: e.clientY - translateY });
     }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const target = (e.target as HTMLElement).closest('[data-table]');
+    if (target) {
+      const tableName = target.getAttribute('data-table');
+      setContextMenu({ x: e.clientX, y: e.clientY, table: tableName });
+    } else {
+      setContextMenu(null);
+    }
+  };
+
+  const copyTableAsImage = async () => {
+    if (!contextMenu?.table) return;
+    const el = document.querySelector(`[data-table="${contextMenu.table}"]`) as HTMLElement;
+    if (!el) return;
+    
+    try {
+      const blob = await toBlob(el, { backgroundColor: 'transparent' });
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        alert('Table copied to clipboard as image!');
+      }
+    } catch (err) {
+      console.error('Failed to copy table as image', err);
+      alert('Failed to copy table as image.');
+    }
+    setContextMenu(null);
   };
 
   useEffect(() => {
@@ -289,12 +319,13 @@ export const DiagramCanvas = () => {
       ref={containerRef}
       className={cn(
         "flex-1 h-full relative overflow-hidden bg-slate-50 dark:bg-slate-950",
-        isHandMode || isPanning
+        isPanning
           ? "cursor-grab active:cursor-grabbing"
           : "cursor-default",
       )}
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
+      onContextMenu={handleContextMenu}
     >
       <div
         className={cn(
@@ -442,13 +473,13 @@ export const DiagramCanvas = () => {
                 (hoveredEdge && hoveredEdge !== edgeId);
 
               const markerEnd =
-                settings.edgeArrows && (rel.type === "<" || rel.type === "<>")
+                settings.edgeArrows && (rel.type === ">" || rel.type === "<>")
                   ? isEdgeHovered
                     ? "url(#arrow-end-highlight)"
                     : "url(#arrow-end)"
                   : undefined;
               const markerStart =
-                settings.edgeArrows && rel.type === "<>"
+                settings.edgeArrows && (rel.type === "<" || rel.type === "<>")
                   ? isEdgeHovered
                     ? "url(#arrow-start-highlight)"
                     : "url(#arrow-start)"
@@ -509,6 +540,21 @@ export const DiagramCanvas = () => {
           })}
         </div>
       </div>
+
+      {contextMenu && (
+        <div 
+          className="fixed z-[100] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-md py-1 min-w-[160px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button 
+            onClick={copyTableAsImage}
+            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+          >
+            <LucideIcons.Image size={14} />
+            Copy as Image
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes flow {

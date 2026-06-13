@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import Editor from '@monaco-editor/react';
 import { TEMPLATES, SQL_TEMPLATES } from '../lib/templates';
@@ -9,9 +9,41 @@ import { convertSqlToDsl } from '../lib/sqlToDsl';
 export const Sidebar = () => {
   const code = useAppStore(state => state.code);
   const setCode = useAppStore(state => state.setCode);
+  const compileTempDsl = useAppStore(state => state.compileTempDsl);
   
   const [activeTab, setActiveTab] = useState<'dsl' | 'sql'>('dsl');
   const [sqlCode, setSqlCode] = useState<string>('-- Enter your CREATE TABLE statements here...\n');
+  const [width, setWidth] = useState(340);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    if (activeTab === 'sql') {
+      try {
+        const dsl = convertSqlToDsl(sqlCode);
+        compileTempDsl(dsl);
+      } catch (err) {
+        // Silently ignore errors during typing
+      }
+    }
+  }, [sqlCode, activeTab, compileTempDsl]);
+
+  const startResizing = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging.current) return;
+    const newWidth = Math.max(200, Math.min(800, e.clientX));
+    setWidth(newWidth);
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
 
   const handleEditorWillMount = (monaco: any) => {
     monaco.languages.register({ id: 'erd-dsl' });
@@ -110,7 +142,14 @@ export const Sidebar = () => {
   };
 
   return (
-    <div className="w-[340px] h-full border-r border-slate-800 bg-[#1e1e1e] flex flex-col shrink-0 z-40 shadow-xl">
+    <div 
+      className="h-full border-r border-slate-800 bg-[#1e1e1e] flex flex-col shrink-0 z-40 shadow-xl relative"
+      style={{ width }}
+    >
+      <div 
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 transition-colors z-50 translate-x-1/2"
+        onMouseDown={startResizing}
+      />
       <div className="h-14 border-b border-white/5 flex items-center justify-between px-4 shrink-0 bg-black/20">
         <div className="flex bg-slate-800/50 rounded-lg p-0.5">
           <button
@@ -145,7 +184,7 @@ export const Sidebar = () => {
             title="Generate Diagram from SQL"
           >
             <Play className="w-3.5 h-3.5" />
-            Generate
+            Compile to DSL
           </button>
         )}
       </div>
